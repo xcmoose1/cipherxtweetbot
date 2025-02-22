@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { TweetType, Tweet, Pool } from '@/types/tweet';
+import { TweetType, Tweet } from '@/types/tweet';
 import { tweetGenerator } from '@/services/tweetGenerator';
-import { tweetBot } from '@/services/tweetBot';
-import { CoinData } from '@/services/lunarCrush';
 import Image from 'next/image';
 
 interface TweetError {
@@ -17,7 +15,6 @@ interface TweetError {
 
 interface TweetPreviewProps {
     selectedTypes: TweetType[];
-    frequency: number;
     onApprove?: (tweetId: string) => void;
 }
 
@@ -48,7 +45,7 @@ const sampleTweets: Record<TweetType, string[]> = {
     ]
 };
 
-export default function TweetPreview({ selectedTypes, frequency, onApprove }: TweetPreviewProps) {
+export default function TweetPreview({ selectedTypes, onApprove }: TweetPreviewProps) {
     const [pendingTweets, setPendingTweets] = useState<Tweet[]>([]);
     const [previewTweet, setPreviewTweet] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +53,6 @@ export default function TweetPreview({ selectedTypes, frequency, onApprove }: Tw
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
         // Check for new tweets every minute
@@ -135,9 +131,6 @@ export default function TweetPreview({ selectedTypes, frequency, onApprove }: Tw
         } catch (err) {
             const error = err as TweetError;
             setError(error.message);
-            if (error.response?.status === 401) {
-                setIsAuthenticated(false);
-            }
         } finally {
             setLoading(false);
         }
