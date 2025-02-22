@@ -4,6 +4,7 @@ import { useState } from 'react';
 import TweetSettings from '@/components/TweetSettings';
 import TweetPreview from '@/components/TweetPreview';
 import ApiStatus from '@/components/ApiStatus';
+import TwitterAuth from '@/components/TwitterAuth'; // added import statement
 import { TweetType } from '@/types/tweet';
 
 export default function Dashboard() {
@@ -21,19 +22,26 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <TweetPreview 
-            selectedTypes={selectedTweetTypes}
-          />
+          <div className="card bg-base-100 shadow-xl mb-8">
+            <TwitterAuth />
+          </div>
+          <div className="card bg-base-100 shadow-xl">
+            <TweetPreview 
+              selectedTypes={selectedTweetTypes}
+            />
+          </div>
         </div>
         <div>
-          <TweetSettings 
-            selectedTypes={selectedTweetTypes}
-            onTypesChange={setSelectedTweetTypes}
-            frequency={tweetFrequency}
-            onFrequencyChange={setTweetFrequency}
-            isActive={isActive}
-            onToggleActive={setIsActive}
-          />
+          <div className="card bg-base-100 shadow-xl">
+            <TweetSettings 
+              selectedTypes={selectedTweetTypes}
+              onTypesChange={setSelectedTweetTypes}
+              frequency={tweetFrequency}
+              onFrequencyChange={setTweetFrequency}
+              isActive={isActive}
+              onToggleActive={setIsActive}
+            />
+          </div>
         </div>
       </div>
     </main>
