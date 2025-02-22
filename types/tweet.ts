@@ -1,8 +1,12 @@
+import { CoinData } from '../services/lunarCrush';
+
 export type TweetType = 'MARKET_TRENDS' | 'HYPE' | 'GEM_ALERT' | 'MEMECOINS' | 'DEFI' | 'SENTIMENT';
 
 export interface TweetMetrics {
     topCoins: CoinData[];
     trendingPools: Pool[];
+    sentiment?: number;
+    socialVolume?: number;
 }
 
 export interface Pool {
