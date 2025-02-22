@@ -8,7 +8,7 @@ export class OpenAIService {
 
     async generateTweetTemplate(context: string): Promise<string> {
         const cacheKey = `tweet_template_${context}`;
-        const cachedData = cacheService.get(cacheKey);
+        const cachedData = cacheService.get<string>(cacheKey);
 
         if (cachedData) {
             console.log('OpenAI: Using cached template');
@@ -46,36 +46,29 @@ export class OpenAIService {
             // Validate and potentially truncate the tweet
             const validTweet = this.ensureValidTweet(tweet);
             
-            cacheService.set(cacheKey, validTweet, this.ttlMinutes);
+            cacheService.set<string>(cacheKey, validTweet, this.ttlMinutes);
             return validTweet;
         } catch (error: any) {
-            console.error('OpenAI API Error:', {
-                message: error.message,
-                response: error.response?.data
-            });
+            console.error('OpenAI: Error generating tweet template:', error.message);
             throw new Error('Failed to generate tweet template');
         }
     }
 
     private ensureValidTweet(tweet: string): string {
-        if (tweet.length <= 280) {
-            return tweet;
-        }
-
-        console.warn('OpenAI: Tweet too long, truncating:', {
-            original: tweet,
-            length: tweet.length
-        });
-
-        // Find the last complete word before 277 characters (to allow for "...")
-        let truncated = tweet.substring(0, 277);
-        const lastSpace = truncated.lastIndexOf(' ');
+        // Remove extra whitespace and newlines
+        let cleanTweet = tweet.replace(/\s+/g, ' ').trim();
         
-        if (lastSpace > 0) {
-            truncated = truncated.substring(0, lastSpace);
+        // Remove quotes if present
+        if (cleanTweet.startsWith('"') && cleanTweet.endsWith('"')) {
+            cleanTweet = cleanTweet.slice(1, -1).trim();
         }
-
-        return truncated + '...';
+        
+        // Truncate if too long
+        if (cleanTweet.length > 280) {
+            cleanTweet = cleanTweet.slice(0, 277) + '...';
+        }
+        
+        return cleanTweet;
     }
 }
 
