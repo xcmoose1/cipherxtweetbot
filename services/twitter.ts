@@ -9,8 +9,8 @@ export class TwitterAPI {
     constructor() {
         this.oauth = new OAuth({
             consumer: {
-                key: API_CONFIG.TWITTER_API_KEY,
-                secret: API_CONFIG.TWITTER_API_SECRET
+                key: API_CONFIG.X_API_KEY,
+                secret: API_CONFIG.X_API_SECRET
             },
             signature_method: 'HMAC-SHA1',
             hash_function(base_string, key) {
@@ -33,8 +33,8 @@ export class TwitterAPI {
 
     public generateAuthHeader(method: string, url: string, data: any = {}): string {
         const token = {
-            key: API_CONFIG.TWITTER_ACCESS_TOKEN,
-            secret: API_CONFIG.TWITTER_ACCESS_TOKEN_SECRET
+            key: API_CONFIG.X_ACCESS_TOKEN,
+            secret: API_CONFIG.X_ACCESS_TOKEN_SECRET
         };
 
         const request_data = {
