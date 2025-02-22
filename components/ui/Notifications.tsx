@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 
 export interface Notification {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info';
-  timestamp: Date;
 }
 
 interface NotificationsProps {
@@ -14,7 +13,7 @@ interface NotificationsProps {
 
 export default function Notifications({ notifications, onDismiss }: NotificationsProps) {
   return (
-    <div className="fixed bottom-16 right-4 z-50 space-y-2 max-w-sm w-full">
+    <div className="notifications">
       {notifications.map((notification) => (
         <div
           key={notification.id}
@@ -47,7 +46,7 @@ export default function Notifications({ notifications, onDismiss }: Notification
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{notification.message}</p>
               <p className="text-xs opacity-70 mt-1">
-                {notification.timestamp.toLocaleTimeString()}
+                {/* Removed timestamp */}
               </p>
             </div>
             <button

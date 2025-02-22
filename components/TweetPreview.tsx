@@ -3,6 +3,17 @@ import { TweetType } from '@/types/tweet';
 import { tweetGenerator } from '@/services/tweetGenerator';
 import { tweetBot } from '@/services/tweetBot';
 import { CoinData } from '@/services/lunarCrush';
+import Image from 'next/image';
+
+interface TweetError {
+    message: string;
+    response?: {
+        status: number;
+        data?: {
+            error?: string;
+        };
+    };
+}
 
 interface TweetPreviewProps {
   selectedTypes: TweetType[];
@@ -125,11 +136,12 @@ export default function TweetPreview({ selectedTypes, frequency, onApprove }: Tw
       await tweetBot.manualTweet();
       setSuccess(true);
     } catch (error: any) {
-      setError(error.message || 'Failed to post tweet');
-      console.error('Tweet error:', error);
+      const err = error as TweetError;
+      setError(err.message || 'Failed to post tweet');
+      console.error('Tweet error:', err);
 
       // If we get a 401 error, we need to authenticate
-      if (error.response?.status === 401) {
+      if (err.response?.status === 401) {
         setIsAuthenticated(false);
       }
     } finally {
@@ -207,10 +219,12 @@ export default function TweetPreview({ selectedTypes, frequency, onApprove }: Tw
                         {tweet.metrics.topCoins.map((coin: CoinData) => (
                             <div key={coin.symbol} className="bg-base-300 rounded-lg p-3 space-y-2">
                                 <div className="flex items-center gap-2">
-                                    <img 
+                                    <Image 
                                         src={coin.logo} 
                                         alt={coin.name} 
-                                        className="w-6 h-6 rounded-full"
+                                        width={24}
+                                        height={24}
+                                        className="rounded-full"
                                     />
                                     <span className="font-medium">{coin.name}</span>
                                     <span className="text-sm text-base-content/70">${coin.symbol}</span>

@@ -7,7 +7,7 @@ interface ErrorResponse {
     details?: Record<string, unknown>;
 }
 
-export async function POST(req: Request) {
+export async function POST() {
     try {
         await tweetBot.manualTweet();
         return NextResponse.json({ success: true });
