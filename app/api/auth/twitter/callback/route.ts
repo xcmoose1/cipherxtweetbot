@@ -51,7 +51,6 @@ export async function GET(req: Request) {
         const accessTokenParams = new URLSearchParams(responseText);
         const accessToken = accessTokenParams.get('oauth_token');
         const accessTokenSecret = accessTokenParams.get('oauth_token_secret');
-        const userId = accessTokenParams.get('user_id');
         const screenName = accessTokenParams.get('screen_name');
 
         if (!accessToken || !accessTokenSecret) {
