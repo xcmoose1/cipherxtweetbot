@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { API_CONFIG } from '@/services/config';
 
 // OAuth 2.0 configuration
-const CLIENT_ID = process.env.NEXT_PUBLIC_X_API_KEY;
-const REDIRECT_URI = 'http://localhost:3000/api/auth/twitter/callback';
+const CLIENT_ID = API_CONFIG.X_API_KEY;
+const REDIRECT_URI = `${API_CONFIG.APP_URL}/api/auth/twitter/callback`;
 const SCOPE = 'tweet.read tweet.write users.read offline.access';
 
 export async function GET() {

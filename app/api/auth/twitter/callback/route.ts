@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
+import { API_CONFIG } from '@/services/config';
 
 export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
         const code = searchParams.get('code');
+        const state = searchParams.get('state');
         
         if (!code) {
-            return NextResponse.json(
-                { error: 'No authorization code received' },
-                { status: 400 }
-            );
+            return NextResponse.redirect(`${API_CONFIG.APP_URL}?error=no_code`);
+        }
+
+        // Verify state parameter (to be implemented)
+        if (!state) {
+            return NextResponse.redirect(`${API_CONFIG.APP_URL}?error=invalid_state`);
         }
 
         // Log the received code
@@ -19,12 +23,9 @@ export async function GET(req: Request) {
         // This will be implemented next
 
         // For now, redirect back to the main page
-        return NextResponse.redirect(new URL('/', req.url));
+        return NextResponse.redirect(`${API_CONFIG.APP_URL}/dashboard`);
     } catch (error) {
         console.error('Twitter callback error:', error);
-        return NextResponse.json(
-            { error: 'Failed to process Twitter callback' },
-            { status: 500 }
-        );
+        return NextResponse.redirect(`${API_CONFIG.APP_URL}?error=callback_failed`);
     }
 }
