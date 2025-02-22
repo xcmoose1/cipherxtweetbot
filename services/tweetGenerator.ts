@@ -52,11 +52,11 @@ class TweetGenerator {
                             - Sentiment: ${topSocial.sentiment}%
                             - 24h Change: ${topSocial.percent_change_24h}%
 
-                            Market Sentiment: ${poolSentiment}
+                            Market Sentiment: ${poolSentiment.overallSentiment}
                             Top Pool: ${poolStats.name}
-                            - 24h Volume: $${poolStats.volume24h}
-                            - TVL Change: ${poolStats.tvlChange}%
-                            - Buy/Sell Ratio: ${poolStats.buySellRatio}`
+                            - 24h Volume: $${(poolStats.volume24h / 1e6).toFixed(2)}M
+                            - Price Change: ${poolStats.priceChange24h.toFixed(2)}%
+                            - Buy Pressure: ${poolStats.buyPressure.toFixed(1)}%`
                         }
                     ],
                     temperature: 0.7,
@@ -66,7 +66,7 @@ class TweetGenerator {
                     headers: {
                         'Authorization': `Bearer ${API_CONFIG.OPENAI_API_KEY}`,
                         'Content-Type': 'application/json',
-                    },
+                    }
                 }
             );
 
