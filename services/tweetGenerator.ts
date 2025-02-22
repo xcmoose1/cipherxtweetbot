@@ -2,19 +2,11 @@ import axios from 'axios';
 import { API_CONFIG } from './config';
 import { lunarCrush, CoinData } from './lunarCrush';
 import { coinGecko } from './coinGecko';
+import { Tweet, TweetType } from '@/types/tweet';
 
-interface TweetData {
-    content: string;
-    timestamp: number;
-    metrics: {
-        topCoins: CoinData[];
-        trendingPools: any[];
-        sentiment: number;
-        socialVolume: number;
-    };
+interface TweetData extends Tweet {
     approved: boolean;
     posted: boolean;
-    id: string;
 }
 
 class TweetGenerator {
@@ -50,35 +42,38 @@ class TweetGenerator {
                             - 24h Change: ${topSentiment.percent_change_24h}%
                             - Social Volume: ${topSentiment.social_volume_24h}
 
-                            Hottest Trading Pool: ${topPool.attributes.name}
-                            - 24h Volume: $${(poolStats.volume24h / 1e6).toFixed(2)}M
-                            - Price Change: ${poolStats.priceChange24h.toFixed(2)}%
-                            - Buy Pressure: ${poolStats.buyPressure.toFixed(1)}%
+                            Top Gainer: ${topGainer.name} ($${topGainer.symbol})
+                            - 24h Change: ${topGainer.percent_change_24h}%
+                            - Price: $${topGainer.price}
+                            - Volume: $${topGainer.volume_24h}
 
-                            Market Sentiment:
-                            - Overall: ${poolSentiment.overallSentiment}
-                            - Avg Buy Pressure: ${poolSentiment.averageBuyPressure.toFixed(1)}%
-                            - Total DEX Volume: $${(poolSentiment.totalVolume24h / 1e9).toFixed(2)}B
-                            
-                            Make it catchy, use emojis, and include relevant hashtags. Focus on the most interesting trends.`
+                            Top Social Activity: ${topSocial.name} ($${topSocial.symbol})
+                            - Social Volume: ${topSocial.social_volume_24h}
+                            - Sentiment: ${topSocial.sentiment}%
+                            - 24h Change: ${topSocial.percent_change_24h}%
+
+                            Market Sentiment: ${poolSentiment}
+                            Top Pool: ${poolStats.name}
+                            - 24h Volume: $${poolStats.volume24h}
+                            - TVL Change: ${poolStats.tvlChange}%
+                            - Buy/Sell Ratio: ${poolStats.buySellRatio}`
                         }
                     ],
                     temperature: 0.7,
-                    max_tokens: 120
+                    max_tokens: 100,
                 },
                 {
                     headers: {
                         'Authorization': `Bearer ${API_CONFIG.OPENAI_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    }
+                        'Content-Type': 'application/json',
+                    },
                 }
             );
 
-            const tweet = response.data.choices[0].message.content.trim();
-            return tweet;
+            return response.data.choices[0].message.content;
         } catch (error) {
             console.error('Error generating tweet:', error);
-            throw error;
+            throw new Error('Failed to generate tweet');
         }
     }
 
@@ -91,7 +86,9 @@ class TweetGenerator {
         const tweet = await this.generateTweet(marketData, poolData);
         
         const tweetData: TweetData = {
+            id: Math.random().toString(36).substring(7),
             content: tweet,
+            type: 'MARKET_TRENDS',
             timestamp: Date.now(),
             metrics: {
                 topCoins: marketData.slice(0, 5),
@@ -100,8 +97,7 @@ class TweetGenerator {
                 socialVolume: marketData[0].social_volume_24h
             },
             approved: false,
-            posted: false,
-            id: Math.random().toString(36).substring(7)
+            posted: false
         };
 
         this.pendingTweets.push(tweetData);
@@ -119,7 +115,7 @@ class TweetGenerator {
         this.pendingTweets = this.pendingTweets.filter(
             tweet => tweet.timestamp > thirtyMinutesAgo && !tweet.posted
         );
-        return this.pendingTweets;
+        return this.pendingTweets.filter(t => !t.posted && !t.approved);
     }
 
     approveTweet(tweetId: string): TweetData | null {
@@ -136,6 +132,22 @@ class TweetGenerator {
         if (tweet) {
             tweet.posted = true;
         }
+    }
+
+    addTweet(content: string, type: TweetType = 'MARKET_TRENDS'): void {
+        const tweet: TweetData = {
+            id: Math.random().toString(36).substring(7),
+            content,
+            type,
+            timestamp: Date.now(),
+            metrics: {
+                topCoins: [],
+                trendingPools: []
+            },
+            approved: false,
+            posted: false
+        };
+        this.pendingTweets.push(tweet);
     }
 
     getLatestTweet(): TweetData | null {
