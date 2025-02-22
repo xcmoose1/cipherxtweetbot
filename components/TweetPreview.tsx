@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TweetType, Tweet } from '@/types/tweet';
+import { TweetType, Tweet, Pool } from '@/types/tweet';
 import { tweetGenerator } from '@/services/tweetGenerator';
 import { tweetBot } from '@/services/tweetBot';
 import { CoinData } from '@/services/lunarCrush';
@@ -257,7 +257,7 @@ export default function TweetPreview({ selectedTypes, frequency, onApprove }: Tw
                             <div>
                                 <h3 className="text-lg font-semibold mb-3">Trending Pools</h3>
                                 <div className="grid grid-cols-1 gap-3">
-                                    {tweet.metrics.trendingPools.map((pool: any) => (
+                                    {tweet.metrics.trendingPools.map((pool: Pool) => (
                                         <div key={pool.id} className="bg-base-300 rounded-lg p-3 space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <span className="font-medium">{pool.attributes.name}</span>
