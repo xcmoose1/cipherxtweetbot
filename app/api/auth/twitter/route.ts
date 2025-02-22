@@ -1,35 +1,57 @@
 import { NextResponse } from 'next/server';
 import { API_CONFIG } from '@/services/config';
+import OAuth from 'oauth-1.0a';
+import crypto from 'crypto';
 
-// OAuth 2.0 configuration
-const CLIENT_ID = API_CONFIG.X_API_KEY;
-const REDIRECT_URI = `${API_CONFIG.APP_URL}/api/auth/twitter/callback`;
-const SCOPE = 'tweet.read tweet.write users.read offline.access';
+// Create OAuth 1.0a instance
+const oauth = new OAuth({
+    consumer: {
+        key: API_CONFIG.X_API_KEY,
+        secret: API_CONFIG.X_API_SECRET
+    },
+    signature_method: 'HMAC-SHA1',
+    hash_function(base_string, key) {
+        return crypto
+            .createHmac('sha1', key)
+            .update(base_string)
+            .digest('base64');
+    }
+});
 
 export async function GET() {
     try {
-        // Generate random state for security
-        const state = Math.random().toString(36).substring(7);
-        
-        // Construct the Twitter OAuth URL
-        const authUrl = new URL('https://twitter.com/i/oauth2/authorize');
-        authUrl.searchParams.append('response_type', 'code');
-        authUrl.searchParams.append('client_id', CLIENT_ID || '');
-        authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
-        authUrl.searchParams.append('scope', SCOPE);
-        authUrl.searchParams.append('state', state);
-        authUrl.searchParams.append('code_challenge_method', 'plain');
-        authUrl.searchParams.append('code_challenge', state);
+        // Request token URL
+        const requestTokenURL = 'https://api.twitter.com/oauth/request_token';
+        const callbackURL = `${API_CONFIG.APP_URL}/api/auth/twitter/callback`;
 
-        // Store state in session/cookie for verification (to be implemented)
+        // Generate request token
+        const response = await fetch(requestTokenURL + '?oauth_callback=' + encodeURIComponent(callbackURL), {
+            method: 'POST',
+            headers: {
+                'Authorization': oauth.toHeader(oauth.authorize({
+                    url: requestTokenURL,
+                    method: 'POST'
+                }))['Authorization']
+            }
+        });
 
-        // Redirect to Twitter's authorization page
-        return NextResponse.redirect(authUrl.toString());
+        if (!response.ok) {
+            throw new Error(`Failed to get request token: ${response.statusText}`);
+        }
+
+        const responseText = await response.text();
+        const urlParams = new URLSearchParams(responseText);
+        const oauthToken = urlParams.get('oauth_token');
+
+        if (!oauthToken) {
+            throw new Error('No oauth_token in response');
+        }
+
+        // Redirect to Twitter authorization page
+        const authUrl = `https://api.twitter.com/oauth/authenticate?oauth_token=${oauthToken}`;
+        return NextResponse.redirect(authUrl);
     } catch (error) {
         console.error('Twitter auth error:', error);
-        return NextResponse.json(
-            { error: 'Failed to initiate Twitter auth' },
-            { status: 500 }
-        );
+        return NextResponse.redirect(`${API_CONFIG.APP_URL}?error=auth_failed`);
     }
 }
