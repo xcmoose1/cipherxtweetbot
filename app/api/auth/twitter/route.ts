@@ -20,38 +20,57 @@ const oauth = new OAuth({
 
 export async function GET() {
     try {
-        // Request token URL
+        if (!API_CONFIG.X_API_KEY || !API_CONFIG.X_API_SECRET) {
+            console.error('Twitter API credentials not configured');
+            return NextResponse.json({ error: 'Twitter API not configured' }, { status: 500 });
+        }
+
+        // Request token URL (v1.1 API)
         const requestTokenURL = 'https://api.twitter.com/oauth/request_token';
         const callbackURL = `${API_CONFIG.APP_URL}/api/auth/twitter/callback`;
 
+        console.log('Using callback URL:', callbackURL); // Debug log
+
         // Generate request token
-        const response = await fetch(requestTokenURL + '?oauth_callback=' + encodeURIComponent(callbackURL), {
+        const authHeader = oauth.toHeader(oauth.authorize({
+            url: requestTokenURL,
+            method: 'POST',
+            data: { oauth_callback: callbackURL }
+        }))['Authorization'];
+
+        console.log('Auth header:', authHeader); // Debug log
+
+        const response = await fetch(requestTokenURL, {
             method: 'POST',
             headers: {
-                'Authorization': oauth.toHeader(oauth.authorize({
-                    url: requestTokenURL,
-                    method: 'POST'
-                }))['Authorization']
-            }
+                'Authorization': authHeader,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `oauth_callback=${encodeURIComponent(callbackURL)}`
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to get request token: ${response.statusText}`);
+            const error = await response.text();
+            console.error('Twitter request token error:', error);
+            return NextResponse.json({ error: 'Failed to get request token' }, { status: response.status });
         }
 
         const responseText = await response.text();
+        console.log('Twitter response:', responseText); // Debug log
+
         const urlParams = new URLSearchParams(responseText);
         const oauthToken = urlParams.get('oauth_token');
 
         if (!oauthToken) {
-            throw new Error('No oauth_token in response');
+            console.error('No oauth_token in response:', responseText);
+            return NextResponse.json({ error: 'Invalid response from Twitter' }, { status: 500 });
         }
 
-        // Redirect to Twitter authorization page
+        // Return the authorization URL
         const authUrl = `https://api.twitter.com/oauth/authenticate?oauth_token=${oauthToken}`;
-        return NextResponse.redirect(authUrl);
+        return NextResponse.json({ url: authUrl });
     } catch (error) {
         console.error('Twitter auth error:', error);
-        return NextResponse.redirect(`${API_CONFIG.APP_URL}?error=auth_failed`);
+        return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
     }
 }
