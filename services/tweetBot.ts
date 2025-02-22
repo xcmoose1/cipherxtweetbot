@@ -9,6 +9,7 @@ const TWEET_GENERATION_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
 export class TweetBotService {
     private isGenerating = false;
     private lastTweetTime: Date | null = null;
+    private interval: NodeJS.Timeout | null = null;
 
     constructor() {}
 
@@ -153,6 +154,49 @@ export class TweetBotService {
                 stack: error.stack
             });
             throw error; // Re-throw so UI can handle it
+        } finally {
+            this.isGenerating = false;
+        }
+    }
+
+    start(): void {
+        if (this.interval) {
+            return; // Already started
+        }
+
+        console.log('TweetBot: Starting automatic tweet generation...');
+        
+        // Generate first tweet immediately
+        this.generateAndPostTweet();
+
+        // Set up interval for subsequent tweets
+        this.interval = setInterval(() => {
+            this.generateAndPostTweet();
+        }, TWEET_GENERATION_INTERVAL);
+    }
+
+    stop(): void {
+        if (this.interval) {
+            clearInterval(this.interval);
+            this.interval = null;
+            console.log('TweetBot: Stopped automatic tweet generation');
+        }
+    }
+
+    private async generateAndPostTweet(): Promise<void> {
+        if (this.isGenerating) {
+            console.log('TweetBot: Already generating a tweet, skipping...');
+            return;
+        }
+
+        try {
+            this.isGenerating = true;
+            const tweet = await this.generateTweet();
+            await this.manualTweet(tweet);
+            this.lastTweetTime = new Date();
+            console.log('TweetBot: Successfully generated and posted tweet');
+        } catch (error) {
+            console.error('TweetBot: Failed to generate and post tweet:', error);
         } finally {
             this.isGenerating = false;
         }
